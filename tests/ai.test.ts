@@ -12,6 +12,22 @@ const baseline = computeBaseline(normalizeHistory(raw.historical), raw.todayDate
 const analysis = analyzeWellness(today, baseline, 105);
 afterEach(() => { vi.unstubAllEnvs(); parse.mockReset(); });
 describe("AI boundary", () => {
+  it("passes a preference separately from metrics without changing the analysis", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "test");
+    parse.mockResolvedValue({ output_parsed: { headline: "A pause", observation: "You've tracked 310 minutes.", recommendation: "Consider a short break." } });
+    const original = JSON.stringify(analysis);
+    await createInsight(today, baseline, analysis, "Help me plan breaks");
+    const summary = JSON.parse(parse.mock.calls[0]![0].input[1].content);
+    expect(summary.userPreferenceNote).toBe("Help me plan breaks");
+    expect(summary.trackedMinutesToday).toBe(310);
+    expect(JSON.stringify(analysis)).toBe(original);
+  });
+  it("personalizes fallback guidance and restores defaults when the note is cleared", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const focused = await createInsight(today, baseline, analysis, "Help me focus on one task");
+    expect(focused.insight.recommendation).toContain("Choose one task");
+    expect((await createInsight(today, baseline, analysis, "")).insight.recommendation).toContain("stepping away");
+  });
   it("sends only a derived summary and preserves deterministic analysis", async () => {
     vi.stubEnv("OPENAI_API_KEY", "test-secret");
     parse.mockResolvedValue({ output_parsed: { headline: "A fuller day", observation: "You've tracked 310 minutes today.", recommendation: "Consider a short screen-free pause." } });

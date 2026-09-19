@@ -48,6 +48,8 @@ All requests use explicit account-local begin/end dates and `format=json`. Live 
 
 ## Optional AI explanations
 
+The “Before your insight” card accepts an optional 400-character note about the kind of guidance you want. Choose a suggestion or write your own, then click **Update insight**. Refresh reuses your applied preference; clearing the field and submitting restores the default. Notes stay in page memory and reset on reload. They are sent in a POST body (not a URL) and, when enabled, forwarded to OpenAI alongside summarized metrics. Avoid private details. Notes personalize topic/tone only and cannot change the deterministic state or score. Without OpenAI, built-in guidance supports break and focus themes; other custom wording requires AI.
+
 ```env
 OPENAI_API_KEY=your-openai-key
 ```

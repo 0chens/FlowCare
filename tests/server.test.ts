@@ -1,10 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { rescueTimeRequest, fetchRescueTime } from "../lib/rescuetime";
 import { buildDashboard } from "../lib/dashboard";
-import { GET } from "../app/api/dashboard/route";
+import { GET, POST } from "../app/api/dashboard/route";
 
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 describe("server integration", () => {
+  it("accepts a preference in a POST body and rejects invalid notes", async () => {
+    vi.stubEnv("USE_MOCK_DATA", "true"); vi.stubEnv("OPENAI_API_KEY", "");
+    const response = await POST(new Request("http://localhost/api/dashboard", { method: "POST", body: JSON.stringify({ insightNote: "Help me focus on one task" }) }));
+    expect(response.status).toBe(200);
+    expect((await response.json()).insight.recommendation).toContain("Choose one task");
+    for (const insightNote of [42, "x".repeat(401), null]) {
+      expect((await POST(new Request("http://localhost/api/dashboard", { method: "POST", body: JSON.stringify({ insightNote }) }))).status).toBe(400);
+    }
+  });
   it("authenticates using a header and never a query secret", async () => {
     vi.stubEnv("RESCUETIME_API_KEY", "test-private-secret");
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ row_headers: [], rows: [] })));
