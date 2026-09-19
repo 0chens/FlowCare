@@ -1,8 +1,8 @@
 # FlowCare
 
-**Your digital activity, in context.** A complete, privacy-conscious digital-wellness dashboard built with Next.js App Router, React, TypeScript, Tailwind CSS, Recharts, Lucide, and the OpenAI SDK. No database required.
+A complete, privacy-conscious digital-wellness dashboard built with Next.js App Router, React, TypeScript, Tailwind CSS, Recharts, Lucide, and the OpenAI SDK. No database required.
 
-FlowCare compares computer activity with your own recent pattern. Its deterministic engine describes observable activity; the optional AI layer writes a concise explanation and a practical suggestion. This is **not medical software**. Digital Balance is an activity-pattern visualization, not a health, mental-health, or burnout score.
+FlowCare compares computer activity with your own recent pattern. Its deterministic engine describes observable activity; the AI layer writes a concise explanation and a practical suggestion. This is **not medical software**. Digital Balance is an activity-pattern visualization, not a health, mental-health, or burnout score.
 
 ## Quick start
 
