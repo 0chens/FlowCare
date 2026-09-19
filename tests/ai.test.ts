@@ -14,9 +14,10 @@ afterEach(() => { vi.unstubAllEnvs(); parse.mockReset(); });
 describe("AI boundary", () => {
   it("passes a preference separately from metrics without changing the analysis", async () => {
     vi.stubEnv("OPENAI_API_KEY", "test");
-    parse.mockResolvedValue({ output_parsed: { headline: "A pause", observation: "You've tracked 310 minutes.", recommendation: "Consider a short break." } });
+    parse.mockResolvedValue({ output_parsed: { headline: "A pause", observation: "You've tracked 310 minutes.", recommendation: "Consider a short break.", explanation: "You asked for break guidance. Your activity total is above your recent average, so the suggestion focuses on a short pause." } });
     const original = JSON.stringify(analysis);
-    await createInsight(today, baseline, analysis, "Help me plan breaks");
+    const result = await createInsight(today, baseline, analysis, "Help me plan breaks");
+    expect(result.insight.explanation).toContain("You asked for break guidance");
     const summary = JSON.parse(parse.mock.calls[0]![0].input[1].content);
     expect(summary.userPreferenceNote).toBe("Help me plan breaks");
     expect(summary.trackedMinutesToday).toBe(310);
@@ -26,11 +27,16 @@ describe("AI boundary", () => {
     vi.stubEnv("OPENAI_API_KEY", "");
     const focused = await createInsight(today, baseline, analysis, "Help me focus on one task");
     expect(focused.insight.recommendation).toContain("Choose one task");
+    expect(focused.insight.explanation).toContain("You asked for focus guidance");
+    const breaks = await createInsight(today, baseline, analysis, "Help me plan breaks");
+    expect(breaks.insight.explanation).toContain("You asked for help with breaks");
+    const cleared = await createInsight(today, baseline, analysis, "");
+    expect(cleared.insight.explanation).toContain("With no preference supplied");
     expect((await createInsight(today, baseline, analysis, "")).insight.recommendation).toContain("stepping away");
   });
   it("sends only a derived summary and preserves deterministic analysis", async () => {
     vi.stubEnv("OPENAI_API_KEY", "test-secret");
-    parse.mockResolvedValue({ output_parsed: { headline: "A fuller day", observation: "You've tracked 310 minutes today.", recommendation: "Consider a short screen-free pause." } });
+    parse.mockResolvedValue({ output_parsed: { headline: "A fuller day", observation: "You've tracked 310 minutes today.", recommendation: "Consider a short screen-free pause.", explanation: "Your tracked activity is above your recent full-day average, so the suggestion is a short pause." } });
     const result = await createInsight(today, baseline, analysis);
     const request = parse.mock.calls[0]![0];
     const serialized = JSON.stringify(request);
@@ -45,4 +51,13 @@ describe("AI boundary", () => {
     vi.stubEnv("OPENAI_API_KEY", "test"); parse.mockRejectedValue(new Error("private-provider-details"));
     const result = await createInsight(today, baseline, analysis); expect(result.insightSource).toBe("fallback"); expect(JSON.stringify(result)).not.toContain("private-provider-details");
   });
+  it("rejects unsafe explanation text along with the insight", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "test");
+    parse.mockResolvedValue({ output_parsed: { headline: "A fuller day", observation: "310 minutes tracked.", recommendation: "Take a pause.", explanation: "You have burnout." } });
+    const result = await createInsight(today, baseline, analysis, "Help me focus");
+    expect(result.insightSource).toBe("fallback");
+    expect(result.insight.explanation).toContain("focus guidance");
+    expect(result.insight.explanation).not.toContain("burnout");
+  });
 });
+

@@ -45,6 +45,7 @@ export interface AIInsight {
   headline: string;
   observation: string;
   recommendation: string;
+  explanation: string;
 }
 export interface DashboardPayload {
   generatedAt: string;

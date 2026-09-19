@@ -39,6 +39,16 @@ describe("server integration", () => {
   });
   it("returns safe errors in live mode without silently switching to mock", async () => {
     vi.stubEnv("USE_MOCK_DATA", "false"); vi.stubEnv("RESCUETIME_API_KEY", "");
-    const response = await GET(); expect(response.status).toBe(502); expect(await response.json()).toEqual({ error: "We couldn't retrieve your RescueTime activity." });
+    const response = await GET(); expect(response.status).toBe(502); expect(await response.json()).toEqual({ error: "We couldn't retrieve your RescueTime activity.", code: "missing_key" });
+  });
+  it.each([[401, "unauthorized"], [403, "unauthorized"], [429, "rate_limited"], [500, "unavailable"]])("classifies provider status %s without exposing the response", async (status, code) => {
+    vi.stubEnv("RESCUETIME_API_KEY", "test-secret");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("private details", { status: Number(status) })));
+    await expect(rescueTimeRequest({ perspective: "rank", restrict_kind: "activity", restrict_begin: "2026-09-19", restrict_end: "2026-09-19" })).rejects.toMatchObject({ code });
+  });
+  it("classifies network restrictions safely", async () => {
+    vi.stubEnv("RESCUETIME_API_KEY", "test-secret");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("private details")));
+    await expect(rescueTimeRequest({ perspective: "rank", restrict_kind: "activity", restrict_begin: "2026-09-19", restrict_end: "2026-09-19" })).rejects.toMatchObject({ code: "network" });
   });
 });

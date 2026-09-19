@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { buildDashboard } from "@/lib/dashboard";
+import { ProviderError } from "@/lib/provider-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 async function respond(insightNote = "") {
   try {
     return NextResponse.json(await buildDashboard(insightNote), { headers: { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
-  } catch {
-    return NextResponse.json({ error: "We couldn't retrieve your RescueTime activity." }, { status: 502, headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return NextResponse.json({ error: "We couldn't retrieve your RescueTime activity.",
+      ...(error instanceof ProviderError ? { code: error.code } : {}) }, { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }
 export async function GET() { return respond(); }

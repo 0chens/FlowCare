@@ -12,7 +12,9 @@ export function InsightCard({ data }: { data: DashboardPayload }) {
   return <article className="card insight-card"><div className="card-heading"><span className="eyebrow"><Sparkles size={15} /> AI INSIGHT</span><span className="small-pill">{data.insightSource === "openai" ? "Personalized for you" : "Built-in guidance"}</span></div>
     <h2>{data.insight.headline}</h2><p className="insight-observation">{data.insight.observation}</p>
     <div className="recommendation"><span className="recommendation-icon"><ArrowUpRight size={19} /></span><div><span className="eyebrow">A SMALL NEXT STEP</span><p>{data.insight.recommendation}</p></div></div>
-    <details className="explanation"><summary>Why am I seeing this?<ChevronDown size={16} /></summary><div className="explanation-content"><dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-    <p>Sustained activity is estimated from consecutive populated intervals, not an exact continuous session. Today is compared with complete days, not the same time of day.</p><ul>{data.analysis.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></div></details>
+    <details className="explanation"><summary>Why am I seeing this?<ChevronDown size={16} /></summary><div className="explanation-content">
+    <div className="insight-rationale"><span className="eyebrow">BEHIND THIS INSIGHT</span><p>{data.insight.explanation}</p></div>
+    <dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <p>Sustained activity is estimated from consecutive populated intervals, not an exact continuous session. Today is compared with complete days, not the same time of day. Your preference shapes the guidance, not your Digital Balance score.</p></div></details>
   </article>;
 }
